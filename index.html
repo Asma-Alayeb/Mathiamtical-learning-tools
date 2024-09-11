@@ -42,7 +42,17 @@
             margin-top: auto;
             font-size: 12px;
         }
-        input[type="text"], input[type="number"] {
+        .mathquill-editable {
+            border: 1px solid #6a0dad;
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 300px;
+            min-height: 40px;
+            display: inline-block;
+            background-color: white;
+            font-size: 18px;
+        }
+        input[type="number"] {
             font-size: 18px;
             padding: 5px;
             width: 300px;
@@ -59,7 +69,7 @@
     <div class="controls">
         <div class="input-container">
             <label class="input-label" for="functionInput">Enter a function f(x): </label>
-            <input type="text" id="functionInput" placeholder="e.g., x^2" />
+            <div id="functionInput" class="mathquill-editable"></div>
         </div>
         <div class="input-container">
             <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
@@ -87,6 +97,7 @@
         <p>&copy; 2024 Asma S. Alayeb</p>
     </footer>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
         const canvas = document.getElementById('graph');
@@ -99,12 +110,31 @@
         const kInput = document.getElementById('kInput');
         const latexDisplay = document.getElementById('latexDisplay');
 
+        const MQ = MathQuill.getInterface(2); // Get the MathQuill interface
+        const mathField = MQ.MathField(functionInput, {
+            handlers: {
+                edit: function () {
+                    drawGraph();
+                }
+            }
+        });
+
         function drawGraph() {
             // Get the transformation values
             const a = parseFloat(aInput.value);
             const b = parseFloat(bInput.value);
             const h = parseFloat(hInput.value);
             const k = parseFloat(kInput.value);
+
+            // Get the function input
+            let userFunction;
+            try {
+                const userInput = mathField.latex().replace("^", "**");
+                userFunction = new Function('x', 'return ' + userInput);
+            } catch (e) {
+                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
+                return;
+            }
 
             // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -133,16 +163,6 @@
             ctx.moveTo(canvas.width / 2, 0);
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
-
-            // Get the function input
-            let userFunction;
-            try {
-                const userInput = functionInput.value.replace("^", "**");
-                userFunction = new Function('x', 'return ' + userInput);
-            } catch (e) {
-                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
-                return;
-            }
 
             // Update and display the formula in LaTeX
             const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
@@ -177,7 +197,6 @@
         }
 
         // Event listeners to redraw the graph when inputs are changed
-        functionInput.addEventListener('input', drawGraph);
         aInput.addEventListener('input', drawGraph);
         bInput.addEventListener('input', drawGraph);
         hInput.addEventListener('input', drawGraph);
