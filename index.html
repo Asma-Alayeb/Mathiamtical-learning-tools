@@ -98,7 +98,7 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
@@ -110,6 +110,7 @@
         const kInput = document.getElementById('kInput');
         const latexDisplay = document.getElementById('latexDisplay');
 
+        // Initialize MathQuill
         const MQ = MathQuill.getInterface(2); // Get the MathQuill interface
         const mathField = MQ.MathField(functionInput, {
             handlers: {
