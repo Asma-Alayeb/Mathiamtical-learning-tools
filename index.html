@@ -9,10 +9,11 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 20px;
-            min-height: 100vh;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
         }
         header, footer {
             background-color: #6a0dad;
@@ -48,7 +49,7 @@
             border-radius: 5px;
             padding: 10px;
             min-width: 400px;
-            height: 40px;
+            min-height: 40px;
             display: inline-block;
             background-color: white;
             font-size: 18px;
@@ -118,6 +119,21 @@
 
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
 
             // Draw x and y axis
             ctx.strokeStyle = 'black';
