@@ -19,8 +19,16 @@
         .controls {
             margin-top: 20px;
         }
-        .slider-label {
+        .slider-label, .input-label {
             font-weight: bold;
+        }
+        .input-container {
+            margin-top: 10px;
+        }
+        .formula {
+            margin-top: 20px;
+            font-size: 18px;
+            font-family: 'Courier New', Courier, monospace;
         }
     </style>
 </head>
@@ -29,32 +37,40 @@
     <canvas id="graph" width="400" height="400"></canvas>
 
     <div class="controls">
-        <div>
-            <label class="slider-label" for="aSlider">Vertical Stretch/Compress (a): </label>
-            <input type="range" id="aSlider" min="0.5" max="3" value="1" step="0.1">
+        <div class="input-container">
+            <label class="input-label" for="functionInput">Enter a function f(x): </label>
+            <input type="text" id="functionInput" value="Math.sin(x)" style="width: 200px;">
         </div>
-        <div>
-            <label class="slider-label" for="bSlider">Horizontal Stretch/Compress (b): </label>
-            <input type="range" id="bSlider" min="0.5" max="3" value="1" step="0.1">
+        <div class="input-container">
+            <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
+            <input type="number" id="aInput" value="1" step="0.1">
         </div>
-        <div>
-            <label class="slider-label" for="hSlider">Horizontal Shift (h): </label>
-            <input type="range" id="hSlider" min="-5" max="5" value="0" step="0.1">
+        <div class="input-container">
+            <label class="input-label" for="bInput">Horizontal Stretch/Compress (b): </label>
+            <input type="number" id="bInput" value="1" step="0.1">
         </div>
-        <div>
-            <label class="slider-label" for="kSlider">Vertical Shift (k): </label>
-            <input type="range" id="kSlider" min="-5" max="5" value="0" step="0.1">
+        <div class="input-container">
+            <label class="input-label" for="hInput">Horizontal Shift (h): </label>
+            <input type="number" id="hInput" value="0" step="0.1">
+        </div>
+        <div class="input-container">
+            <label class="input-label" for="kInput">Vertical Shift (k): </label>
+            <input type="number" id="kInput" value="0" step="0.1">
         </div>
     </div>
+
+    <div class="formula" id="formulaDisplay"></div>
 
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
 
-        const aSlider = document.getElementById('aSlider');
-        const bSlider = document.getElementById('bSlider');
-        const hSlider = document.getElementById('hSlider');
-        const kSlider = document.getElementById('kSlider');
+        const functionInput = document.getElementById('functionInput');
+        const aInput = document.getElementById('aInput');
+        const bInput = document.getElementById('bInput');
+        const hInput = document.getElementById('hInput');
+        const kInput = document.getElementById('kInput');
+        const formulaDisplay = document.getElementById('formulaDisplay');
 
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -69,19 +85,32 @@
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
 
-            // Draw function y = a * f(b * (x - h)) + k
+            // Parse the function input
+            let userFunction;
+            try {
+                userFunction = new Function('x', 'return ' + functionInput.value);
+            } catch (e) {
+                formulaDisplay.textContent = "Invalid function. Please enter a valid JavaScript function.";
+                return;
+            }
+
+            // Get the transformation values
+            const a = parseFloat(aInput.value);
+            const b = parseFloat(bInput.value);
+            const h = parseFloat(hInput.value);
+            const k = parseFloat(kInput.value);
+
+            // Display the function transformation formula
+            formulaDisplay.textContent = `f(x) = ${a} * f(${b} * (x - ${h})) + ${k}`;
+
+            // Draw the transformed function
             ctx.strokeStyle = 'blue';
             ctx.lineWidth = 2;
             ctx.beginPath();
 
-            const a = parseFloat(aSlider.value);
-            const b = parseFloat(bSlider.value);
-            const h = parseFloat(hSlider.value);
-            const k = parseFloat(kSlider.value);
-
             for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 1) {
                 const transformedX = (x / 20) * b - h;
-                const y = a * Math.sin(transformedX) + k;
+                const y = a * userFunction(transformedX) + k;
 
                 const canvasX = canvas.width / 2 + x;
                 const canvasY = canvas.height / 2 - y * 20;
@@ -95,11 +124,12 @@
             ctx.stroke();
         }
 
-        // Event listeners to redraw the graph when sliders are changed
-        aSlider.addEventListener('input', drawGraph);
-        bSlider.addEventListener('input', drawGraph);
-        hSlider.addEventListener('input', drawGraph);
-        kSlider.addEventListener('input', drawGraph);
+        // Event listeners to redraw the graph when inputs are changed
+        functionInput.addEventListener('input', drawGraph);
+        aInput.addEventListener('input', drawGraph);
+        bInput.addEventListener('input', drawGraph);
+        hInput.addEventListener('input', drawGraph);
+        kInput.addEventListener('input', drawGraph);
 
         // Initial draw
         drawGraph();
