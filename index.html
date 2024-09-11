@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Function Transformations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 20px;
         }
+        header, footer {
+            background-color: #6a0dad;
+            color: white;
+            padding: 10px 0;
+        }
         #graph {
-            margin: 0 auto;
+            margin: 20px auto;
             border: 1px solid #000;
             width: 400px;
             height: 400px;
@@ -30,16 +36,23 @@
             font-size: 18px;
             font-family: 'Courier New', Courier, monospace;
         }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
-    <h1>Function Transformations</h1>
+    <header>
+        <h1>Function Transformations</h1>
+    </header>
+
     <canvas id="graph" width="400" height="400"></canvas>
 
     <div class="controls">
         <div class="input-container">
             <label class="input-label" for="functionInput">Enter a function f(x): </label>
-            <input type="text" id="functionInput" value="Math.sin(x)" style="width: 200px;">
+            <span id="functionInput" class="mathquill-editable"></span>
         </div>
         <div class="input-container">
             <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
@@ -59,18 +72,36 @@
         </div>
     </div>
 
-    <div class="formula" id="formulaDisplay"></div>
+    <div class="formula">
+        <span id="latexDisplay"></span>
+    </div>
 
+    <footer>
+        <p>&copy; 2024 Asma S. Alayeb</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
 
-        const functionInput = document.getElementById('functionInput');
         const aInput = document.getElementById('aInput');
         const bInput = document.getElementById('bInput');
         const hInput = document.getElementById('hInput');
         const kInput = document.getElementById('kInput');
-        const formulaDisplay = document.getElementById('formulaDisplay');
+        const latexDisplay = document.getElementById('latexDisplay');
+
+        // Initialize MathQuill
+        const MQ = MathQuill.getInterface(2);
+        const mathField = MQ.MathField(document.getElementById('functionInput'), {
+            spaceBehavesLikeTab: true,
+            handlers: {
+                edit: function() {
+                    drawGraph();
+                }
+            }
+        });
 
         function drawGraph() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -85,12 +116,13 @@
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
 
-            // Parse the function input
+            // Get the function input
             let userFunction;
             try {
-                userFunction = new Function('x', 'return ' + functionInput.value);
+                const latex = mathField.latex();
+                userFunction = new Function('x', 'return ' + mathField.text().replace('^', '**'));
             } catch (e) {
-                formulaDisplay.textContent = "Invalid function. Please enter a valid JavaScript function.";
+                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
                 return;
             }
 
@@ -100,8 +132,10 @@
             const h = parseFloat(hInput.value);
             const k = parseFloat(kInput.value);
 
-            // Display the function transformation formula
-            formulaDisplay.textContent = `f(x) = ${a} * f(${b} * (x - ${h})) + ${k}`;
+            // Update and display the formula in LaTeX
+            const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
+            latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
 
             // Draw the transformed function
             ctx.strokeStyle = 'blue';
@@ -125,7 +159,6 @@
         }
 
         // Event listeners to redraw the graph when inputs are changed
-        functionInput.addEventListener('input', drawGraph);
         aInput.addEventListener('input', drawGraph);
         bInput.addEventListener('input', drawGraph);
         hInput.addEventListener('input', drawGraph);
