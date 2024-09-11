@@ -3,31 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Function Transformations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #graph {
+            margin: 0 auto;
+            border: 1px solid #000;
+            width: 400px;
+            height: 400px;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        .slider-label {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="page1.html">Page 1</a></li>
-                <li><a href="page2.html">Page 2</a></li>
-                <li><a href="page3.html">Page 3</a></li>
-                <li><a href="page4.html">Page 4</a></li>
-                <li><a href="page5.html">Page 5</a></li>
-                <li><a href="page6.html">Page 6</a></li>
-            </ul>
-        </nav>
-    </header>
+    <h1>Function Transformations</h1>
+    <canvas id="graph" width="400" height="400"></canvas>
 
-    <main>
-        <h1>Welcome to My Website</h1>
-        <p>This is the home page. Add your HTML content here.</p>
-    </main>
+    <div class="controls">
+        <div>
+            <label class="slider-label" for="aSlider">Vertical Stretch/Compress (a): </label>
+            <input type="range" id="aSlider" min="0.5" max="3" value="1" step="0.1">
+        </div>
+        <div>
+            <label class="slider-label" for="bSlider">Horizontal Stretch/Compress (b): </label>
+            <input type="range" id="bSlider" min="0.5" max="3" value="1" step="0.1">
+        </div>
+        <div>
+            <label class="slider-label" for="hSlider">Horizontal Shift (h): </label>
+            <input type="range" id="hSlider" min="-5" max="5" value="0" step="0.1">
+        </div>
+        <div>
+            <label class="slider-label" for="kSlider">Vertical Shift (k): </label>
+            <input type="range" id="kSlider" min="-5" max="5" value="0" step="0.1">
+        </div>
+    </div>
 
-    <footer>
-        <p>&copy; 2024 My Website</p>
-    </footer>
+    <script>
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+
+        const aSlider = document.getElementById('aSlider');
+        const bSlider = document.getElementById('bSlider');
+        const hSlider = document.getElementById('hSlider');
+        const kSlider = document.getElementById('kSlider');
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw x and y axis
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+
+            // Draw function y = a * f(b * (x - h)) + k
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            const a = parseFloat(aSlider.value);
+            const b = parseFloat(bSlider.value);
+            const h = parseFloat(hSlider.value);
+            const k = parseFloat(kSlider.value);
+
+            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 1) {
+                const transformedX = (x / 20) * b - h;
+                const y = a * Math.sin(transformedX) + k;
+
+                const canvasX = canvas.width / 2 + x;
+                const canvasY = canvas.height / 2 - y * 20;
+
+                if (x === -canvas.width / 2) {
+                    ctx.moveTo(canvasX, canvasY);
+                } else {
+                    ctx.lineTo(canvasX, canvasY);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // Event listeners to redraw the graph when sliders are changed
+        aSlider.addEventListener('input', drawGraph);
+        bSlider.addEventListener('input', drawGraph);
+        hSlider.addEventListener('input', drawGraph);
+        kSlider.addEventListener('input', drawGraph);
+
+        // Initial draw
+        drawGraph();
+    </script>
 </body>
 </html>
