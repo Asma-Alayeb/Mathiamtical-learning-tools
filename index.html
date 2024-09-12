@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Function Transformations</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,6 +41,10 @@
         footer {
             margin-top: auto;
             font-size: 12px;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            padding: 10px 0;
         }
         input[type="text"], input[type="number"] {
             font-size: 18px;
@@ -87,7 +91,7 @@
         <p>&copy; 2024 Asma S. Alayeb</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
@@ -98,20 +102,6 @@
         const hInput = document.getElementById('hInput');
         const kInput = document.getElementById('kInput');
         const latexDisplay = document.getElementById('latexDisplay');
-
-        function parseFunction(str) {
-            // Replace common math functions and operators
-            return str
-                .replace(/\^/g, '**') // Replace ^ with ** for exponentiation
-                .replace(/sqrt\(/g, 'Math.sqrt(') // Replace sqrt with Math.sqrt
-                .replace(/ln\(/g, 'Math.log(') // Replace ln with Math.log
-                .replace(/exp\(/g, 'Math.exp(') // Replace exp with Math.exp
-                .replace(/sin\(/g, 'Math.sin(') // Replace sin with Math.sin
-                .replace(/cos\(/g, 'Math.cos(') // Replace cos with Math.cos
-                .replace(/tan\(/g, 'Math.tan(') // Replace tan with Math.tan
-                .replace(/log\(/g, 'Math.log10(') // Replace log with Math.log10
-                .replace(/([a-zA-Z])\(/g, '$1('); // Replace function names like f(x) with f(x)
-        }
 
         function drawGraph() {
             // Get the transformation values
@@ -125,13 +115,13 @@
 
             // Draw grid
             ctx.strokeStyle = '#e0e0e0';
-            for (let x = 0; x <= canvas.width; x += 20) {
+            for (let x = 0; x < canvas.width; x += 20) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, canvas.height);
                 ctx.stroke();
             }
-            for (let y = 0; y <= canvas.height; y += 20) {
+            for (let y = 0; y < canvas.height; y += 20) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
@@ -151,11 +141,10 @@
             // Get the function input
             let userFunction;
             try {
-                const userInput = parseFunction(functionInput.value);
+                const userInput = functionInput.value.replace("^", "**");
                 userFunction = new Function('x', 'return ' + userInput);
             } catch (e) {
                 latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
                 return;
             }
 
@@ -170,15 +159,19 @@
             ctx.beginPath();
 
             // Determine the range for x based on transformations
-            const step = 0.1;
-            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += step) {
-                const transformedX = (x / 20 + h) / b;
+            let minX = -canvas.width / 2;
+            let maxX = canvas.width / 2;
+            let minY = -canvas.height / 2;
+            let maxY = canvas.height / 2;
+
+            for (let x = minX; x <= maxX; x += 1) {
+                const transformedX = (x / 20) * b - h;
                 const y = a * userFunction(transformedX) + k;
 
                 const canvasX = canvas.width / 2 + x;
                 const canvasY = canvas.height / 2 - y * 20;
 
-                if (x === -canvas.width / 2) {
+                if (x === minX) {
                     ctx.moveTo(canvasX, canvasY);
                 } else {
                     ctx.lineTo(canvasX, canvasY);
