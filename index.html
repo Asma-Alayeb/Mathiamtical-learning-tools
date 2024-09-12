@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Function Input</title>
+    <title>Function Graphing</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.9.0/plotly.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -57,23 +58,45 @@
             margin-top: auto;
             width: 100%; /* Full-width footer */
         }
+        .controls {
+            margin-top: 20px;
+        }
+        .controls input {
+            margin: 5px;
+            padding: 5px;
+            width: 60px;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Function Input with MathQuill</h1>
+        <h1>Graphing Transformations: g(x) = a * f(bx - h) + k</h1>
     </header>
 
     <main>
-        <h2>Enter a function: g(x) = a * f(bx - h) + k</h2>
+        <h2>Enter a base function: f(x)</h2>
         <div class="math-container">
             <span id="math-field" class="mathquill-editable"></span>
         </div>
-        <button onclick="updateFunction()">Submit</button>
+
+        <div class="controls">
+            <label for="a">a (vertical stretch): </label>
+            <input type="number" id="a" value="1" step="0.1">
+            <label for="b">b (horizontal stretch): </label>
+            <input type="number" id="b" value="1" step="0.1">
+            <label for="h">h (horizontal shift): </label>
+            <input type="number" id="h" value="0" step="1">
+            <label for="k">k (vertical shift): </label>
+            <input type="number" id="k" value="0" step="1">
+        </div>
+
+        <button onclick="updateGraph()">Graph Function</button>
+
+        <div id="graph"></div>
 
         <div class="output">
-            <p>Your function is:</p>
+            <p>The transformed function is:</p>
             <span id="latex-output" class="math-output"></span>
         </div>
     </main>
@@ -97,15 +120,67 @@
             }
         });
 
-        function updateFunction() {
-            const enteredMath = mathField.latex();
-            document.getElementById('latex-output').innerHTML = `\\(${enteredMath}\\)`;
-            MathJax.typeset(); // Ensure LaTeX rendering updates after user submits
+        function evaluateFunction(expression, x) {
+            return math.eval(expression, { x: x });
+        }
+
+        function generateGraphData(expression, a, b, h, k) {
+            let xValues = [];
+            let yOriginal = [];
+            let yTransformed = [];
+            for (let x = -10; x <= 10; x += 0.1) {
+                xValues.push(x);
+                let f_x = evaluateFunction(expression, x); // f(x)
+                yOriginal.push(f_x);
+                // Apply transformation: g(x) = a * f(bx - h) + k
+                let transformed = a * evaluateFunction(expression, b * (x - h)) + k;
+                yTransformed.push(transformed);
+            }
+            return { xValues, yOriginal, yTransformed };
+        }
+
+        function updateGraph() {
+            const expression = mathField.latex();
+            const a = parseFloat(document.getElementById("a").value);
+            const b = parseFloat(document.getElementById("b").value);
+            const h = parseFloat(document.getElementById("h").value);
+            const k = parseFloat(document.getElementById("k").value);
+
+            const graphData = generateGraphData(expression, a, b, h, k);
+
+            // Update LaTeX display of the new function
+            const newFunctionLatex = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
+            document.getElementById('latex-output').innerHTML = `\\(${newFunctionLatex}\\)`;
+            MathJax.typeset(); // Re-render the updated function
+
+            // Plot the graph with Plotly
+            const traceOriginal = {
+                x: graphData.xValues,
+                y: graphData.yOriginal,
+                mode: 'lines',
+                name: 'Original f(x)'
+            };
+
+            const traceTransformed = {
+                x: graphData.xValues,
+                y: graphData.yTransformed,
+                mode: 'lines',
+                name: 'Transformed g(x)'
+            };
+
+            const layout = {
+                title: 'Graph of f(x) and g(x)',
+                xaxis: { title: 'x' },
+                yaxis: { title: 'y' },
+                showlegend: true
+            };
+
+            Plotly.newPlot('graph', [traceOriginal, traceTransformed], layout);
         }
     </script>
 
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+
 </body>
 </html>
