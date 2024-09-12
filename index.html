@@ -111,13 +111,13 @@
 
             // Draw grid
             ctx.strokeStyle = '#e0e0e0';
-            for (let x = 0; x < canvas.width; x += 20) {
+            for (let x = 0; x <= canvas.width; x += 20) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, canvas.height);
                 ctx.stroke();
             }
-            for (let y = 0; y < canvas.height; y += 20) {
+            for (let y = 0; y <= canvas.height; y += 20) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
@@ -155,19 +155,15 @@
             ctx.beginPath();
 
             // Determine the range for x based on transformations
-            let minX = -canvas.width / 2;
-            let maxX = canvas.width / 2;
-            let minY = -canvas.height / 2;
-            let maxY = canvas.height / 2;
-
-            for (let x = minX; x <= maxX; x += 1) {
-                const transformedX = (x / 20) * b - h;
+            const step = 0.1;
+            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += step) {
+                const transformedX = (x / 20 + h) / b;
                 const y = a * userFunction(transformedX) + k;
 
                 const canvasX = canvas.width / 2 + x;
                 const canvasY = canvas.height / 2 - y * 20;
 
-                if (x === minX) {
+                if (x === -canvas.width / 2) {
                     ctx.moveTo(canvasX, canvasY);
                 } else {
                     ctx.lineTo(canvasX, canvasY);
