@@ -8,94 +8,36 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f3e6f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
             text-align: center;
+            margin: 20px;
         }
-
         header, footer {
             background-color: #6a0dad;
             color: white;
-            padding: 20px 0;
-            font-size: 1.5em;
+            padding: 10px 0;
         }
-
         #graph {
             margin: 20px auto;
-            border: 2px solid #6a0dad;
-            border-radius: 10px;
-            width: 500px;
+            width: 80%;
             height: 500px;
         }
-
         .controls {
             margin-top: 20px;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
         }
-
-        .input-container {
-            margin: 10px 20px;
-        }
-
-        .input-label {
+        .slider-label, .input-label {
             font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
         }
-
-        input[type="number"] {
-            width: 60px;
-            padding: 5px;
-            border: 1px solid #6a0dad;
-            border-radius: 5px;
-            text-align: center;
+        .input-container {
+            margin-top: 10px;
         }
-
-        #functionInput {
-            background-color: white;
-            border: 1px solid #6a0dad;
-            border-radius: 5px;
-            padding: 10px;
-            min-width: 250px;
-        }
-
         .formula {
             margin-top: 20px;
-            font-size: 20px;
+            font-size: 18px;
             font-family: 'Courier New', Courier, monospace;
-            background-color: #f3e6f5;
-            padding: 10px;
-            border: 1px solid #6a0dad;
-            border-radius: 10px;
-            display: inline-block;
         }
-
         footer {
             margin-top: 20px;
-            font-size: 14px;
-        }
-
-        @media (max-width: 600px) {
-            #graph {
-                width: 90%;
-                height: auto;
-            }
-
-            input[type="number"] {
-                width: 50px;
-            }
-
-            header, footer {
-                font-size: 1.2em;
-            }
-
-            .controls {
-                flex-direction: column;
-            }
+            font-size: 12px;
         }
     </style>
 </head>
@@ -104,7 +46,7 @@
         <h1>Function Transformations</h1>
     </header>
 
-    <canvas id="graph" width="500" height="500"></canvas>
+    <div id="graph"></div>
 
     <div class="controls">
         <div class="input-container">
@@ -138,11 +80,10 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.8.0/math.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
-        const canvas = document.getElementById('graph');
-        const ctx = canvas.getContext('2d');
-
+        const graphDiv = document.getElementById('graph');
         const aInput = document.getElementById('aInput');
         const bInput = document.getElementById('bInput');
         const hInput = document.getElementById('hInput');
@@ -161,23 +102,14 @@
         });
 
         function drawGraph() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw x and y axis
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.stroke();
+            // Clear the previous graph
+            Plotly.purge(graphDiv);
 
             // Get the function input
             let userFunction;
             try {
                 const latex = mathField.latex();
-                userFunction = new Function('x', 'return ' + mathField.text().replace('^', '**'));
+                userFunction = math.compile(latex);
             } catch (e) {
                 latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
                 return;
@@ -189,30 +121,37 @@
             const h = parseFloat(hInput.value);
             const k = parseFloat(kInput.value);
 
+            // Generate x and y values
+            const xValues = [];
+            const yValues = [];
+            for (let x = -10; x <= 10; x += 0.1) {
+                xValues.push(x);
+                const transformedX = b * (x - h);
+                const y = a * userFunction.evaluate({x: transformedX}) + k;
+                yValues.push(y);
+            }
+
+            // Plot the graph using Plotly
+            const trace = {
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: 'blue'}
+            };
+
+            const layout = {
+                xaxis: {title: 'x'},
+                yaxis: {title: 'f(x)'},
+                title: 'Transformed Function'
+            };
+
+            Plotly.newPlot(graphDiv, [trace], layout);
+
             // Update and display the formula in LaTeX
             const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
             latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
-
-            // Draw the transformed function
-            ctx.strokeStyle = 'blue';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-
-            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 1) {
-                const transformedX = (x / 20) * b - h;
-                const y = a * userFunction(transformedX) + k;
-
-                const canvasX = canvas.width / 2 + x;
-                const canvasY = canvas.height / 2 - y * 20;
-
-                if (x === -canvas.width / 2) {
-                    ctx.moveTo(canvasX, canvasY);
-                } else {
-                    ctx.lineTo(canvasX, canvasY);
-                }
-            }
-            ctx.stroke();
         }
 
         // Event listeners to redraw the graph when inputs are changed
