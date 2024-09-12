@@ -9,7 +9,11 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
         header, footer {
             background-color: #6a0dad;
@@ -18,8 +22,9 @@
         }
         #graph {
             margin: 20px auto;
-            width: 80%;
-            height: 500px;
+            border: 1px solid #000;
+            width: 400px;
+            height: 400px;
         }
         .controls {
             margin-top: 20px;
@@ -36,8 +41,23 @@
             font-family: 'Courier New', Courier, monospace;
         }
         footer {
-            margin-top: 20px;
+            margin-top: auto;
             font-size: 12px;
+        }
+        .mathquill-editable {
+            border: 1px solid #6a0dad;
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 300px;
+            min-height: 40px;
+            display: inline-block;
+            background-color: white;
+            font-size: 18px;
+        }
+        input[type="text"] {
+            font-size: 18px;
+            padding: 5px;
+            width: 300px;
         }
     </style>
 </head>
@@ -46,12 +66,12 @@
         <h1>Function Transformations</h1>
     </header>
 
-    <div id="graph"></div>
+    <canvas id="graph" width="400" height="400"></canvas>
 
     <div class="controls">
         <div class="input-container">
             <label class="input-label" for="functionInput">Enter a function f(x): </label>
-            <span id="functionInput" class="mathquill-editable"></span>
+            <input type="text" id="functionInput" placeholder="e.g., x^2" />
         </div>
         <div class="input-container">
             <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
@@ -79,37 +99,51 @@
         <p>&copy; 2024 Asma S. Alayeb</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.8.0/math.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
-        const graphDiv = document.getElementById('graph');
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+
+        const functionInput = document.getElementById('functionInput');
         const aInput = document.getElementById('aInput');
         const bInput = document.getElementById('bInput');
         const hInput = document.getElementById('hInput');
         const kInput = document.getElementById('kInput');
         const latexDisplay = document.getElementById('latexDisplay');
 
-        // Initialize MathQuill
-        const MQ = MathQuill.getInterface(2);
-        const mathField = MQ.MathField(document.getElementById('functionInput'), {
-            spaceBehavesLikeTab: true,
-            handlers: {
-                edit: function() {
-                    drawGraph();
-                }
-            }
-        });
-
         function drawGraph() {
-            // Clear the previous graph
-            Plotly.purge(graphDiv);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw x and y axis
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
 
             // Get the function input
             let userFunction;
             try {
-                const latex = mathField.latex();
-                userFunction = math.compile(latex);
+                const userInput = functionInput.value.replace("^", "**");
+                userFunction = new Function('x', 'return ' + userInput);
             } catch (e) {
                 latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
                 return;
@@ -121,40 +155,34 @@
             const h = parseFloat(hInput.value);
             const k = parseFloat(kInput.value);
 
-            // Generate x and y values
-            const xValues = [];
-            const yValues = [];
-            for (let x = -10; x <= 10; x += 0.1) {
-                xValues.push(x);
-                const transformedX = b * (x - h);
-                const y = a * userFunction.evaluate({x: transformedX}) + k;
-                yValues.push(y);
-            }
-
-            // Plot the graph using Plotly
-            const trace = {
-                x: xValues,
-                y: yValues,
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: 'blue'}
-            };
-
-            const layout = {
-                xaxis: {title: 'x'},
-                yaxis: {title: 'f(x)'},
-                title: 'Transformed Function'
-            };
-
-            Plotly.newPlot(graphDiv, [trace], layout);
-
             // Update and display the formula in LaTeX
             const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
             latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
             MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
+
+            // Draw the transformed function
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 1) {
+                const transformedX = (x / 20) * b - h;
+                const y = a * userFunction(transformedX) + k;
+
+                const canvasX = canvas.width / 2 + x;
+                const canvasY = canvas.height / 2 - y * 20;
+
+                if (x === -canvas.width / 2) {
+                    ctx.moveTo(canvasX, canvasY);
+                } else {
+                    ctx.lineTo(canvasX, canvasY);
+                }
+            }
+            ctx.stroke();
         }
 
         // Event listeners to redraw the graph when inputs are changed
+        functionInput.addEventListener('input', drawGraph);
         aInput.addEventListener('input', drawGraph);
         bInput.addEventListener('input', drawGraph);
         hInput.addEventListener('input', drawGraph);
