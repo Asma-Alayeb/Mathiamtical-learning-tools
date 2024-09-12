@@ -4,31 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Function Transformations</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        header, footer {
-            background-color: #6a0dad;
-            color: white;
-            padding: 10px 0;
+            margin: 20px;
         }
         #graph {
-            margin: 20px auto;
+            margin: 0 auto;
             border: 1px solid #000;
-            width: 80%;
-            max-width: 600px;
+            width: 400px;
             height: 400px;
         }
         .controls {
             margin-top: 20px;
+        }
+        .slider-label, .input-label {
+            font-weight: bold;
         }
         .input-container {
             margin-top: 10px;
@@ -38,38 +30,16 @@
             font-size: 18px;
             font-family: 'Courier New', Courier, monospace;
         }
-        footer {
-            margin-top: auto;
-            font-size: 12px;
-        }
-        .mathquill-editable {
-            border: 1px solid #6a0dad;
-            border-radius: 5px;
-            padding: 10px;
-            min-width: 300px;
-            min-height: 40px;
-            display: inline-block;
-            background-color: white;
-            font-size: 18px;
-        }
-        input[type="number"] {
-            font-size: 18px;
-            padding: 5px;
-            width: 300px;
-        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Function Transformations</h1>
-    </header>
-
-    <canvas id="graph" width="600" height="400"></canvas>
+    <h1>Function Transformations</h1>
+    <canvas id="graph" width="400" height="400"></canvas>
 
     <div class="controls">
         <div class="input-container">
             <label class="input-label" for="functionInput">Enter a function f(x): </label>
-            <div id="functionInput" class="mathquill-editable"></div>
+            <input type="text" id="functionInput" value="Math.sin(x)" style="width: 200px;">
         </div>
         <div class="input-container">
             <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
@@ -89,16 +59,8 @@
         </div>
     </div>
 
-    <div class="formula">
-        <span id="latexDisplay"></span>
-    </div>
+    <div class="formula" id="formulaDisplay"></div>
 
-    <footer>
-        <p>&copy; 2024 Asma S. Alayeb</p>
-    </footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
@@ -108,51 +70,10 @@
         const bInput = document.getElementById('bInput');
         const hInput = document.getElementById('hInput');
         const kInput = document.getElementById('kInput');
-        const latexDisplay = document.getElementById('latexDisplay');
-
-        const MQ = MathQuill.getInterface(2); // Get the MathQuill interface
-        const mathField = MQ.MathField(functionInput, {
-            handlers: {
-                edit: function () {
-                    drawGraph();
-                }
-            }
-        });
+        const formulaDisplay = document.getElementById('formulaDisplay');
 
         function drawGraph() {
-            // Get the transformation values
-            const a = parseFloat(aInput.value);
-            const b = parseFloat(bInput.value);
-            const h = parseFloat(hInput.value);
-            const k = parseFloat(kInput.value);
-
-            // Get the function input
-            let userFunction;
-            try {
-                const userInput = mathField.latex().replace("^", "**");
-                userFunction = new Function('x', 'return ' + userInput);
-            } catch (e) {
-                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
-                return;
-            }
-
-            // Clear the canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw grid
-            ctx.strokeStyle = '#e0e0e0';
-            for (let x = 0; x < canvas.width; x += 20) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += 20) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
 
             // Draw x and y axis
             ctx.strokeStyle = 'black';
@@ -164,30 +85,37 @@
             ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
 
-            // Update and display the formula in LaTeX
-            const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
-            latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
+            // Parse the function input
+            let userFunction;
+            try {
+                userFunction = new Function('x', 'return ' + functionInput.value);
+            } catch (e) {
+                formulaDisplay.textContent = "Invalid function. Please enter a valid JavaScript function.";
+                return;
+            }
+
+            // Get the transformation values
+            const a = parseFloat(aInput.value);
+            const b = parseFloat(bInput.value);
+            const h = parseFloat(hInput.value);
+            const k = parseFloat(kInput.value);
+
+            // Display the function transformation formula
+            formulaDisplay.textContent = `f(x) = ${a} * f(${b} * (x - ${h})) + ${k}`;
 
             // Draw the transformed function
             ctx.strokeStyle = 'blue';
             ctx.lineWidth = 2;
             ctx.beginPath();
 
-            // Determine the range for x based on transformations
-            let minX = -canvas.width / 2;
-            let maxX = canvas.width / 2;
-            let minY = -canvas.height / 2;
-            let maxY = canvas.height / 2;
-
-            for (let x = minX; x <= maxX; x += 1) {
+            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 1) {
                 const transformedX = (x / 20) * b - h;
                 const y = a * userFunction(transformedX) + k;
 
                 const canvasX = canvas.width / 2 + x;
                 const canvasY = canvas.height / 2 - y * 20;
 
-                if (x === minX) {
+                if (x === -canvas.width / 2) {
                     ctx.moveTo(canvasX, canvasY);
                 } else {
                     ctx.lineTo(canvasX, canvasY);
@@ -197,6 +125,7 @@
         }
 
         // Event listeners to redraw the graph when inputs are changed
+        functionInput.addEventListener('input', drawGraph);
         aInput.addEventListener('input', drawGraph);
         bInput.addEventListener('input', drawGraph);
         hInput.addEventListener('input', drawGraph);
