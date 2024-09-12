@@ -3,206 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Function Graphing</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <title>Function Transformations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
     <style>
         body {
             font-family: Arial, sans-serif;
+            text-align: center;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-        header {
+        header, footer {
             background-color: #6a0dad;
-            color: #fff;
-            padding: 10px;
-            width: 70%; /* Make the header less wide */
-            text-align: center;
-            margin: 0 auto;
+            color: white;
+            padding: 10px 0;
         }
-        main {
-            padding: 20px;
+        #graph {
+            margin: 20px auto;
+            border: 1px solid #000;
             width: 80%;
-            text-align: center;
-            background-color: #f3e6f5;
-            flex: 1;
-        }
-        .math-container {
-            margin-top: 20px;
-        }
-        .mathquill-editable {
-            border: 1px solid #ccc;
-            padding: 8px;
-            min-width: 400px; /* Larger width for better input */
-            font-size: 18px;
-            border-radius: 5px;
-            background-color: #fff;
-        }
-        .output {
-            margin-top: 20px;
-            font-size: 18px;
-            font-family: "Verdana", sans-serif;
-        }
-        .math-output {
-            color: #6a0dad;
-        }
-        footer {
-            background-color: #6a0dad;
-            color: #fff;
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            margin-top: auto;
-            width: 100%; /* Full-width footer */
+            max-width: 600px;
+            height: 400px;
         }
         .controls {
             margin-top: 20px;
         }
-        .controls input {
-            margin: 5px;
-            padding: 5px;
-            width: 60px;
+        .input-container {
+            margin-top: 10px;
         }
-        #graph-container {
+        .formula {
             margin-top: 20px;
+            font-size: 18px;
+            font-family: 'Courier New', Courier, monospace;
         }
-        #graph {
-            width: 100%;
-            height: 400px;
+        footer {
+            margin-top: auto;
+            font-size: 12px;
+        }
+        .mathquill-editable {
+            border: 1px solid #6a0dad;
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 300px;
+            min-height: 40px;
+            display: inline-block;
+            background-color: white;
+            font-size: 18px;
+        }
+        input[type="number"] {
+            font-size: 18px;
+            padding: 5px;
+            width: 300px;
         }
     </style>
 </head>
 <body>
-
     <header>
-        <h1>Graphing Transformations: g(x) = a * f(bx - h) + k</h1>
+        <h1>Function Transformations</h1>
     </header>
 
-    <main>
-        <h2>Enter a base function: f(x)</h2>
-        <div class="math-container">
-            <span id="math-field" class="mathquill-editable"></span>
-        </div>
+    <canvas id="graph" width="600" height="400"></canvas>
 
-        <div class="controls">
-            <label for="a">a (vertical stretch): </label>
-            <input type="number" id="a" value="1" step="0.1">
-            <label for="b">b (horizontal stretch): </label>
-            <input type="number" id="b" value="1" step="0.1">
-            <label for="h">h (horizontal shift): </label>
-            <input type="number" id="h" value="0" step="1">
-            <label for="k">k (vertical shift): </label>
-            <input type="number" id="k" value="0" step="1">
+    <div class="controls">
+        <div class="input-container">
+            <label class="input-label" for="functionInput">Enter a function f(x): </label>
+            <div id="functionInput" class="mathquill-editable"></div>
         </div>
-
-        <button onclick="updateGraph()">Graph Function</button>
-
-        <div id="graph-container">
-            <canvas id="graph"></canvas>
+        <div class="input-container">
+            <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
+            <input type="number" id="aInput" value="1" step="0.1">
         </div>
-
-        <div class="output">
-            <p>The transformed function is:</p>
-            <span id="latex-output" class="math-output"></span>
+        <div class="input-container">
+            <label class="input-label" for="bInput">Horizontal Stretch/Compress (b): </label>
+            <input type="number" id="bInput" value="1" step="0.1">
         </div>
-    </main>
+        <div class="input-container">
+            <label class="input-label" for="hInput">Horizontal Shift (h): </label>
+            <input type="number" id="hInput" value="0" step="0.1">
+        </div>
+        <div class="input-container">
+            <label class="input-label" for="kInput">Vertical Shift (k): </label>
+            <input type="number" id="kInput" value="0" step="0.1">
+        </div>
+    </div>
+
+    <div class="formula">
+        <span id="latexDisplay"></span>
+    </div>
 
     <footer>
         <p>&copy; 2024 Asma S. Alayeb</p>
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
     <script>
-        const MQ = MathQuill.getInterface(2);
-        const mathFieldSpan = document.getElementById('math-field');
-        const mathField = MQ.MathField(mathFieldSpan, {
-            spaceBehavesLikeTab: true,
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+
+        const functionInput = document.getElementById('functionInput');
+        const aInput = document.getElementById('aInput');
+        const bInput = document.getElementById('bInput');
+        const hInput = document.getElementById('hInput');
+        const kInput = document.getElementById('kInput');
+        const latexDisplay = document.getElementById('latexDisplay');
+
+        const MQ = MathQuill.getInterface(2); // Get the MathQuill interface
+        const mathField = MQ.MathField(functionInput, {
             handlers: {
-                edit: function() {
-                    const enteredMath = mathField.latex(); // Get the LaTeX format of the input
-                    document.getElementById('latex-output').innerHTML = `\\(${enteredMath}\\)`;
-                    MathJax.typeset(); // Update MathJax rendering
+                edit: function () {
+                    drawGraph();
                 }
             }
         });
 
-        const ctx = document.getElementById('graph').getContext('2d');
-        let chart = null;
+        function drawGraph() {
+            // Get the transformation values
+            const a = parseFloat(aInput.value);
+            const b = parseFloat(bInput.value);
+            const h = parseFloat(hInput.value);
+            const k = parseFloat(kInput.value);
 
-        function generateGraphData(expression, a, b, h, k) {
-            let xValues = [];
-            let yOriginal = [];
-            let yTransformed = [];
-
-            for (let x = -10; x <= 10; x += 0.1) {
-                xValues.push(x);
-                let f_x = math.evaluate(expression, { x: x });
-                yOriginal.push(f_x);
-                // Apply transformation: g(x) = a * f(bx - h) + k
-                let transformed = a * math.evaluate(expression, { x: b * (x - h) }) + k;
-                yTransformed.push(transformed);
-            }
-            return { xValues, yOriginal, yTransformed };
-        }
-
-        function updateGraph() {
-            const expression = mathField.latex();
-            const a = parseFloat(document.getElementById("a").value);
-            const b = parseFloat(document.getElementById("b").value);
-            const h = parseFloat(document.getElementById("h").value);
-            const k = parseFloat(document.getElementById("k").value);
-
-            const graphData = generateGraphData(expression, a, b, h, k);
-
-            const newFunctionLatex = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
-            document.getElementById('latex-output').innerHTML = `\\(${newFunctionLatex}\\)`;
-            MathJax.typeset();
-
-            if (chart) {
-                chart.destroy();
+            // Get the function input
+            let userFunction;
+            try {
+                const userInput = mathField.latex().replace("^", "**");
+                userFunction = new Function('x', 'return ' + userInput);
+            } catch (e) {
+                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
+                return;
             }
 
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: graphData.xValues,
-                    datasets: [
-                        {
-                            label: 'Original f(x)',
-                            data: graphData.yOriginal,
-                            borderColor: 'blue',
-                            borderWidth: 2,
-                            fill: false
-                        },
-                        {
-                            label: 'Transformed g(x)',
-                            data: graphData.yTransformed,
-                            borderColor: 'red',
-                            borderWidth: 2,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: { display: true, text: 'x' }
-                        },
-                        y: {
-                            title: { display: true, text: 'y' }
-                        }
-                    }
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            for (let x = 0; x < canvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw x and y axis
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+
+            // Update and display the formula in LaTeX
+            const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
+            latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
+            MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
+
+            // Draw the transformed function
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            // Determine the range for x based on transformations
+            let minX = -canvas.width / 2;
+            let maxX = canvas.width / 2;
+            let minY = -canvas.height / 2;
+            let maxY = canvas.height / 2;
+
+            for (let x = minX; x <= maxX; x += 1) {
+                const transformedX = (x / 20) * b - h;
+                const y = a * userFunction(transformedX) + k;
+
+                const canvasX = canvas.width / 2 + x;
+                const canvasY = canvas.height / 2 - y * 20;
+
+                if (x === minX) {
+                    ctx.moveTo(canvasX, canvasY);
+                } else {
+                    ctx.lineTo(canvasX, canvasY);
                 }
-            });
+            }
+            ctx.stroke();
         }
+
+        // Event listeners to redraw the graph when inputs are changed
+        aInput.addEventListener('input', drawGraph);
+        bInput.addEventListener('input', drawGraph);
+        hInput.addEventListener('input', drawGraph);
+        kInput.addEventListener('input', drawGraph);
+
+        // Initial draw
+        drawGraph();
     </script>
-
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 </body>
 </html>
