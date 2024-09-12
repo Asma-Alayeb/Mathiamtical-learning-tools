@@ -1,201 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Function Transformations</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+function drawGraph() {
+    const a = parseFloat(aInput.value);
+    const b = parseFloat(bInput.value);
+    const h = parseFloat(hInput.value);
+    const k = parseFloat(kInput.value);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid
+    ctx.strokeStyle = '#e0e0e0';
+    for (let x = 0; x <= canvas.width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+    // Draw x and y axis
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2);
+    ctx.lineTo(canvas.width, canvas.height / 2);
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+
+    // Add numbers to the axes
+    ctx.font = '12px Arial';
+    ctx.fillStyle = 'black';
+
+    // X-axis numbers
+    for (let x = -canvas.width / 2; x <= canvas.width / 2; x += 40) {
+        const canvasX = canvas.width / 2 + x;
+        ctx.fillText(x / 20, canvasX, canvas.height / 2 + 15);
+    }
+
+    // Y-axis numbers
+    for (let y = -canvas.height / 2; y <= canvas.height / 2; y += 40) {
+        const canvasY = canvas.height / 2 - y;
+        if (y !== 0) { // Avoid drawing "0" twice
+            ctx.fillText(y / 20, canvas.width / 2 + 5, canvasY + 3);
         }
-        header, footer {
-            background-color: #6a0dad;
-            color: white;
-            padding: 10px 0;
+    }
+
+    // Get the function input
+    let userFunction;
+    try {
+        const userInput = parseFunction(functionInput.value);
+        userFunction = new Function('x', 'return ' + userInput);
+    } catch (e) {
+        latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
+        return;
+    }
+
+    // Update and display the formula in LaTeX
+    const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
+    latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
+    MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
+
+    // Draw the transformed function
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    const step = 0.1;
+    for (let x = -canvas.width / 2; x <= canvas.width / 2; x += step) {
+        const transformedX = (x / 20 + h) / b;
+        const y = a * userFunction(transformedX) + k;
+
+        const canvasX = canvas.width / 2 + x;
+        const canvasY = canvas.height / 2 - y * 20;
+
+        if (x === -canvas.width / 2) {
+            ctx.moveTo(canvasX, canvasY);
+        } else {
+            ctx.lineTo(canvasX, canvasY);
         }
-        #graph {
-            margin: 20px auto;
-            border: 1px solid #000;
-            width: 80%;
-            max-width: 600px;
-            height: 400px;
-        }
-        .controls {
-            margin-top: 20px;
-        }
-        .input-container {
-            margin-top: 10px;
-        }
-        .formula {
-            margin-top: 20px;
-            font-size: 18px;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        footer {
-            margin-top: auto;
-            font-size: 12px;
-        }
-        input[type="text"], input[type="number"] {
-            font-size: 18px;
-            padding: 5px;
-            width: 300px;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>Function Transformations</h1>
-    </header>
-
-    <canvas id="graph" width="600" height="400"></canvas>
-
-    <div class="controls">
-        <div class="input-container">
-            <label class="input-label" for="functionInput">Enter a function f(x): </label>
-            <input type="text" id="functionInput" placeholder="e.g., x^2" />
-        </div>
-        <div class="input-container">
-            <label class="input-label" for="aInput">Vertical Stretch/Compress (a): </label>
-            <input type="number" id="aInput" value="1" step="0.1">
-        </div>
-        <div class="input-container">
-            <label class="input-label" for="bInput">Horizontal Stretch/Compress (b): </label>
-            <input type="number" id="bInput" value="1" step="0.1">
-        </div>
-        <div class="input-container">
-            <label class="input-label" for="hInput">Horizontal Shift (h): </label>
-            <input type="number" id="hInput" value="0" step="0.1">
-        </div>
-        <div class="input-container">
-            <label class="input-label" for="kInput">Vertical Shift (k): </label>
-            <input type="number" id="kInput" value="0" step="0.1">
-        </div>
-    </div>
-
-    <div class="formula">
-        <span id="latexDisplay"></span>
-    </div>
-
-    <footer>
-        <p>&copy; 2024 Asma S. Alayeb</p>
-    </footer>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-    <script>
-        const canvas = document.getElementById('graph');
-        const ctx = canvas.getContext('2d');
-
-        const functionInput = document.getElementById('functionInput');
-        const aInput = document.getElementById('aInput');
-        const bInput = document.getElementById('bInput');
-        const hInput = document.getElementById('hInput');
-        const kInput = document.getElementById('kInput');
-        const latexDisplay = document.getElementById('latexDisplay');
-
-        function parseFunction(str) {
-            // Replace common math functions and operators
-            return str
-                .replace(/\^/g, '**') // Replace ^ with ** for exponentiation
-                .replace(/sqrt\(/g, 'Math.sqrt(') // Replace sqrt with Math.sqrt
-                .replace(/ln\(/g, 'Math.log(') // Replace ln with Math.log
-                .replace(/exp\(/g, 'Math.exp(') // Replace exp with Math.exp
-                .replace(/sin\(/g, 'Math.sin(') // Replace sin with Math.sin
-                .replace(/cos\(/g, 'Math.cos(') // Replace cos with Math.cos
-                .replace(/tan\(/g, 'Math.tan(') // Replace tan with Math.tan
-                .replace(/log\(/g, 'Math.log10(') // Replace log with Math.log10
-                .replace(/([a-zA-Z])\(/g, '$1('); // Replace function names like f(x) with f(x)
-        }
-
-        function drawGraph() {
-            // Get the transformation values
-            const a = parseFloat(aInput.value);
-            const b = parseFloat(bInput.value);
-            const h = parseFloat(hInput.value);
-            const k = parseFloat(kInput.value);
-
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw grid
-            ctx.strokeStyle = '#e0e0e0';
-            for (let x = 0; x <= canvas.width; x += 20) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y <= canvas.height; y += 20) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Draw x and y axis
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.stroke();
-
-            // Get the function input
-            let userFunction;
-            try {
-                const userInput = parseFunction(functionInput.value);
-                userFunction = new Function('x', 'return ' + userInput);
-            } catch (e) {
-                latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
-                MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
-                return;
-            }
-
-            // Update and display the formula in LaTeX
-            const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
-            latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
-            MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
-
-            // Draw the transformed function
-            ctx.strokeStyle = 'blue';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-
-            // Determine the range for x based on transformations
-            const step = 0.1;
-            for (let x = -canvas.width / 2; x <= canvas.width / 2; x += step) {
-                const transformedX = (x / 20 + h) / b;
-                const y = a * userFunction(transformedX) + k;
-
-                const canvasX = canvas.width / 2 + x;
-                const canvasY = canvas.height / 2 - y * 20;
-
-                if (x === -canvas.width / 2) {
-                    ctx.moveTo(canvasX, canvasY);
-                } else {
-                    ctx.lineTo(canvasX, canvasY);
-                }
-            }
-            ctx.stroke();
-        }
-
-        // Event listeners to redraw the graph when inputs are changed
-        functionInput.addEventListener('input', drawGraph);
-        aInput.addEventListener('input', drawGraph);
-        bInput.addEventListener('input', drawGraph);
-        hInput.addEventListener('input', drawGraph);
-        kInput.addEventListener('input', drawGraph);
-
-        // Initial draw
-        drawGraph();
-    </script>
-</body>
-</html>
+    }
+    ctx.stroke();
+}
