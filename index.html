@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Function Graphing</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.9.0/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -66,6 +67,13 @@
             padding: 5px;
             width: 60px;
         }
+        #graph-container {
+            margin-top: 20px;
+        }
+        #graph {
+            width: 100%;
+            height: 400px;
+        }
     </style>
 </head>
 <body>
@@ -93,7 +101,9 @@
 
         <button onclick="updateGraph()">Graph Function</button>
 
-        <div id="graph"></div>
+        <div id="graph-container">
+            <canvas id="graph"></canvas>
+        </div>
 
         <div class="output">
             <p>The transformed function is:</p>
@@ -120,20 +130,20 @@
             }
         });
 
-        function evaluateFunction(expression, x) {
-            return math.eval(expression, { x: x });
-        }
+        const ctx = document.getElementById('graph').getContext('2d');
+        let chart = null;
 
         function generateGraphData(expression, a, b, h, k) {
             let xValues = [];
             let yOriginal = [];
             let yTransformed = [];
+
             for (let x = -10; x <= 10; x += 0.1) {
                 xValues.push(x);
-                let f_x = evaluateFunction(expression, x); // f(x)
+                let f_x = math.evaluate(expression, { x: x });
                 yOriginal.push(f_x);
                 // Apply transformation: g(x) = a * f(bx - h) + k
-                let transformed = a * evaluateFunction(expression, b * (x - h)) + k;
+                let transformed = a * math.evaluate(expression, { x: b * (x - h) }) + k;
                 yTransformed.push(transformed);
             }
             return { xValues, yOriginal, yTransformed };
@@ -148,34 +158,46 @@
 
             const graphData = generateGraphData(expression, a, b, h, k);
 
-            // Update LaTeX display of the new function
             const newFunctionLatex = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
             document.getElementById('latex-output').innerHTML = `\\(${newFunctionLatex}\\)`;
-            MathJax.typeset(); // Re-render the updated function
+            MathJax.typeset();
 
-            // Plot the graph with Plotly
-            const traceOriginal = {
-                x: graphData.xValues,
-                y: graphData.yOriginal,
-                mode: 'lines',
-                name: 'Original f(x)'
-            };
+            if (chart) {
+                chart.destroy();
+            }
 
-            const traceTransformed = {
-                x: graphData.xValues,
-                y: graphData.yTransformed,
-                mode: 'lines',
-                name: 'Transformed g(x)'
-            };
-
-            const layout = {
-                title: 'Graph of f(x) and g(x)',
-                xaxis: { title: 'x' },
-                yaxis: { title: 'y' },
-                showlegend: true
-            };
-
-            Plotly.newPlot('graph', [traceOriginal, traceTransformed], layout);
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: graphData.xValues,
+                    datasets: [
+                        {
+                            label: 'Original f(x)',
+                            data: graphData.yOriginal,
+                            borderColor: 'blue',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Transformed g(x)',
+                            data: graphData.yTransformed,
+                            borderColor: 'red',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'x' }
+                        },
+                        y: {
+                            title: { display: true, text: 'y' }
+                        }
+                    }
+                }
+            });
         }
     </script>
 
