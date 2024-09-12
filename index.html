@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Function Transformations</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathquill/0.10.1/mathquill.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -87,7 +87,7 @@
         <p>&copy; 2024 Asma S. Alayeb</p>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
     <script>
         const canvas = document.getElementById('graph');
         const ctx = canvas.getContext('2d');
@@ -98,6 +98,20 @@
         const hInput = document.getElementById('hInput');
         const kInput = document.getElementById('kInput');
         const latexDisplay = document.getElementById('latexDisplay');
+
+        function parseFunction(str) {
+            // Replace common math functions and operators
+            return str
+                .replace(/\^/g, '**') // Replace ^ with ** for exponentiation
+                .replace(/sqrt\(/g, 'Math.sqrt(') // Replace sqrt with Math.sqrt
+                .replace(/ln\(/g, 'Math.log(') // Replace ln with Math.log
+                .replace(/exp\(/g, 'Math.exp(') // Replace exp with Math.exp
+                .replace(/sin\(/g, 'Math.sin(') // Replace sin with Math.sin
+                .replace(/cos\(/g, 'Math.cos(') // Replace cos with Math.cos
+                .replace(/tan\(/g, 'Math.tan(') // Replace tan with Math.tan
+                .replace(/log\(/g, 'Math.log10(') // Replace log with Math.log10
+                .replace(/([a-zA-Z])\(/g, '$1('); // Replace function names like f(x) with f(x)
+        }
 
         function drawGraph() {
             // Get the transformation values
@@ -137,10 +151,11 @@
             // Get the function input
             let userFunction;
             try {
-                const userInput = functionInput.value.replace("^", "**");
+                const userInput = parseFunction(functionInput.value);
                 userFunction = new Function('x', 'return ' + userInput);
             } catch (e) {
                 latexDisplay.innerHTML = "Invalid function. Please enter a valid function.";
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, latexDisplay]);
                 return;
             }
 
