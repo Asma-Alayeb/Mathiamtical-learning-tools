@@ -11,27 +11,58 @@
             text-align: center;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            background-color: #f0f0f0;
         }
         header, footer {
             background-color: #6a0dad;
             color: white;
-            padding: 10px 0;
+            padding: 15px 0;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2em;
         }
         #graph {
             margin: 20px auto;
             border: 1px solid #000;
-            width: 80%;
-            max-width: 600px;
+            width: 400px;
             height: 400px;
+            background-color: white;
         }
         .controls {
-            margin-top: 20px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
         }
         .input-container {
-            margin-top: 10px;
+            margin-top: 15px;
+        }
+        .input-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+            text-align: right;
+            margin-right: 10px;
+        }
+        .mathquill-editable {
+            border: 1px solid #6a0dad;
+            border-radius: 5px;
+            padding: 10px;
+            min-width: 250px;
+            min-height: 40px;
+            display: inline-block;
+            background-color: white;
+            font-size: 18px;
+        }
+        input[type="number"] {
+            font-size: 16px;
+            padding: 5px;
+            width: 150px;
+            margin-left: 10px;
         }
         .formula {
             margin-top: 20px;
@@ -39,23 +70,8 @@
             font-family: 'Courier New', Courier, monospace;
         }
         footer {
-            margin-top: auto;
+            margin-top: 20px;
             font-size: 12px;
-        }
-        .mathquill-editable {
-            border: 1px solid #6a0dad;
-            border-radius: 5px;
-            padding: 10px;
-            min-width: 300px;
-            min-height: 40px;
-            display: inline-block;
-            background-color: white;
-            font-size: 18px;
-        }
-        input[type="number"] {
-            font-size: 18px;
-            padding: 5px;
-            width: 300px;
         }
     </style>
 </head>
@@ -64,7 +80,7 @@
         <h1>Function Transformations</h1>
     </header>
 
-    <canvas id="graph" width="600" height="400"></canvas>
+    <canvas id="graph" width="400" height="400"></canvas>
 
     <div class="controls">
         <div class="input-container">
@@ -120,6 +136,18 @@
         });
 
         function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw x and y axis
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, canvas.height);
+            ctx.stroke();
+
             // Get the transformation values
             const a = parseFloat(aInput.value);
             const b = parseFloat(bInput.value);
@@ -136,34 +164,6 @@
                 return;
             }
 
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw grid
-            ctx.strokeStyle = '#e0e0e0';
-            for (let x = 0; x < canvas.width; x += 20) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += 20) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Draw x and y axis
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.moveTo(canvas.width / 2, 0);
-            ctx.lineTo(canvas.width / 2, canvas.height);
-            ctx.stroke();
-
             // Update and display the formula in LaTeX
             const latexFormula = `g(x) = ${a} \\cdot f(${b}x - ${h}) + ${k}`;
             latexDisplay.innerHTML = `\\(${latexFormula}\\)`;
@@ -177,20 +177,15 @@
             // Determine the range for x based on transformations
             let minX = -canvas.width / 2;
             let maxX = canvas.width / 2;
+            let minY = -canvas.height / 2;
+            let maxY = canvas.height / 2;
 
             for (let x = minX; x <= maxX; x += 1) {
                 const transformedX = (x / 20) * b - h;
-                let y;
-                try {
-                    y = a * userFunction(transformedX) + k;
-                } catch (e) {
-                    y = NaN;
-                }
+                const y = a * userFunction(transformedX) + k;
 
                 const canvasX = canvas.width / 2 + x;
                 const canvasY = canvas.height / 2 - y * 20;
-
-                if (isNaN(y) || y > canvas.height / 2 || y < -canvas.height / 2) continue;
 
                 if (x === minX) {
                     ctx.moveTo(canvasX, canvasY);
